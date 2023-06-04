@@ -1,0 +1,351 @@
+<?xml version="1.0"?>
+<project name="lab3" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+    <taskdef resource="net/sf/antcontrib/antlib.xml"/>
+
+
+    <property file="build.properties"/>
+
+
+    <target name="clean">
+        <delete dir="${ant.dir}"/>
+    </target>
+
+
+    <available classname="org.apache.ivy.Main" property="ivy.installed"/> 
+    <target name="install-ivy" unless="ivy.installed">
+        <echo>INSTALLING IVY</echo>
+        <mkdir dir="${user.home}/.ant/lib"/>
+        <get dest="${user.home}/.ant/lib/ivy.jar" src="http://search.maven.org/remotecontent?filepath=org/apache/ivy/ivy/2.5.1/ivy-2.5.1.jar"/>
+        <echo>IVY INSTALLED</echo>
+    </target>
+
+    <target name="load-dependencies" depends="install-ivy">
+        <echo>LOADING DEPENDENCIES</echo>
+        <ivy:cachepath pathid="dependencies.path">
+            <dependency org="org.eclipse.persistence" name="org.eclipse.persistence.jpa" rev="3.0.3"/>
+            <dependency org="org.postgresql" name="postgresql" rev="42.5.0"/>
+
+            <dependency org="org.primefaces" name="primefaces" rev="12.0.0"/>
+
+            <dependency org="jakarta.validation" name="jakarta.validation-api" rev="3.0.2"/>
+            <dependency org="jakarta.mvc" name="jakarta.mvc-api" rev="2.0.0"/>
+            <dependency org="jakarta.faces" name="jakarta.faces-api" rev="4.0.1"/>
+            <dependency org="jakarta.platform" name="jakarta.jakartaee-api" rev="9.1.0"/>
+            <dependency org="jakarta.persistence" name="jakarta.persistence-api" rev="3.0.0" force="true"/>
+
+            <dependency org="org.opentest4j" name="opentest4j" rev="1.2.0"/>
+            <dependency org="org.junit.platform" name="junit-platform-launcher" rev="1.9.1"/>
+            <dependency org="org.junit.platform" name="junit-platform-commons" rev="1.9.1"/>
+            <dependency org="org.junit.platform" name="junit-platform-engine" rev="1.9.1"/>
+            <dependency org="org.junit.jupiter" name="junit-jupiter-api" rev="5.9.1"/>
+            <dependency org="org.junit.jupiter" name="junit-jupiter-engine" rev="5.9.1"/>
+
+            <dependency org="org.projectlombok" name="lombok" rev="1.18.26"/>
+        </ivy:cachepath>
+    </target>    
+
+
+    <target name="compile" depends="load-dependencies">
+        <echo>COMPILING JAVA CLASSES</echo>
+        <mkdir dir="${build.classes.dir}"/>
+        <javac compiler="javac1.8" srcdir="${src.main.java.dir}" destdir="${build.classes.dir}" classpathref="dependencies.path" includeantruntime="false"/>
+    </target>
+
+    <target name="compile-test" depends="compile">
+        <echo>COMPILING JAVA TEST CLASSES</echo>
+        <mkdir dir="${test.dir}"/>
+        <javac compiler="javac1.8" srcdir="${src.test.dir}" destdir="${test.dir}" includeantruntime="false">
+            <classpath>
+                <path refid="dependencies.path"/>
+                <pathelement location="${build.classes.dir}"/>
+            </classpath>
+        </javac>
+    </target>
+
+
+    <target name="war-copy-static">
+        <echo>COPYING STATIC FILES TO WAR</echo>
+        <mkdir dir="${build.war.dir}"/>
+        <copy todir="${build.war.dir}">
+            <fileset dir="${src.main.webapp.dir}">
+                <exclude name="WEB-INF/**"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="war-copy-libs" depends="load-dependencies">
+        <echo>COPYING LIBS TO WAR</echo>
+        <mkdir dir="${build.war.web-inf.lib.dir}"/>
+        <copy todir="${build.war.web-inf.lib.dir}">
+            <fileset dir="${lib.dir}"/>
+        </copy>
+    </target>
+
+    <target name="war-copy-classes" depends="compile">
+        <echo>COPYING COMPILED CLASSES TO WAR</echo>
+        <mkdir dir="${build.war.web-inf.classes.dir}"/>
+        <copy todir="${build.war.web-inf.classes.dir}">
+            <fileset dir="${build.classes.dir}"/>
+            <fileset dir="${src.main.resources.dir}"/>
+        </copy>
+        <copy todir="${build.war.web-inf.dir}">
+            <fileset dir="${src.main.webapp.web-inf.dir}"/>
+        </copy>
+    </target>
+
+    <target name="build" depends="war-copy-static,war-copy-classes,war-copy-libs">
+        <echo>BUILDING WAR</echo>
+        <echo>${build.dir}</echo>
+        <echo>${build.war.dir}</echo>
+        <war manifest="MANIFEST.MF" destfile="${build.dir}/${war.name}">
+            <fileset dir="${build.war.dir}"/>
+        </war>
+    </target>
+
+
+    <target name="test" depends="compile-test">
+        <echo>TESTING</echo>
+        <mkdir dir="${test.report.dir}"/>
+        <junitlauncher printSummary="true">
+            <classpath>
+                <path refid="dependencies.path"/>
+                <pathelement location="${build.classes.dir}"/>
+                <pathelement location="${test.dir}"/>
+            </classpath>
+            <testclasses outputdir="${test.report.dir}">
+                <fileset dir="${test.dir}"/>
+                <listener type="legacy-xml" sendSysErr="true" sendSysOut="true"/>
+            </testclasses>
+        </junitlauncher>
+    </target>
+
+
+    <target name="doc" depends="load-dependencies">
+        <echo>CREATING DOCUMENTATION</echo>
+        <mkdir dir="${doc.dir}"/>
+        <javadoc sourcepath="${src.main.java.dir}" classpathref="dependencies.path" destdir="${doc.dir}"/>
+
+        <mkdir dir="${build.war.dir}"/>
+        <copy todir="${build.war.doc.dir}">
+            <fileset dir="${doc.dir}"/>
+        </copy>
+        <antcall target="build"/>
+
+        <echo>GENERATING MD5 HASH</echo>
+        <signjar alias="${keystore.alias}" storepass="${keystore.password}" keystore="${keystore.path}" jar="${build.dir}/${war.name}" digestalg="MD5"/>
+        <echo>GENERATING SHA1 HASH</echo>
+        <signjar alias="${keystore.alias}" storepass="${keystore.password}" keystore="${keystore.path}" jar="${build.dir}/${war.name}" digestalg="SHA1"/>
+    </target>
+
+
+    <target name="scp" depends="build">
+        <scp file="${build.dir}/${war.name}" port="${scp.port}" todir="${scp.user}:${scp.password}@${scp.host}:${scp.dest-file}"/>
+    </target>
+
+
+    <target name="music" depends="build">
+        <sound>
+            <success source="${success.music.path}"/>
+            <fail source="${fail.music.path}"/>
+        </sound>
+        <antcall target="build"/>
+    </target>
+
+
+    <available file=".svn" property="svn.inited"/> 
+    <target name="svn-init" unless="svn.inited">
+        <echo>INITING SVN REPO</echo>
+        <exec executable="svn">
+            <arg value="checkout"/>
+            <arg value="file://${svn.branch.path}"/>
+            <arg value="./"/>
+        </exec>
+    </target>
+
+    <target name="diff" depends="svn-init">
+        <echo>CHANGES AT OBSERVED FILES SEARCHING</echo>
+        <exec executable="svn" outputproperty="svn.diff">
+            <arg value="diff"/>
+        </exec>
+
+        <for list="${svn.diff.observed}" param="svn.diff.observed.it" delimiter=",">
+            <sequential>
+                <condition property="svn.diff.found">
+                    <contains string="${svn.diff}" substring="@{svn.diff.observed.it}"/>
+                </condition>
+            </sequential>
+        </for>
+
+        <if>
+            <isset property="svn.diff.found"/>
+            <then>
+                <echo>CHANGES AT OBSERVED FILES FOUND</echo>
+                <exec executable="svn">
+                    <arg value="add"/>
+                    <arg value="."/>
+                    <arg value="--force"/>
+                </exec>
+
+                <input message="commit message: " addproperty="svn.commit.message"/>
+                <echo>COMMITING</echo>
+                <exec executable="svn">
+                    <arg value="commit"/>
+                    <arg value="-m"/>
+                    <arg value="'${svn.commit.message}'"/>
+                </exec>
+            </then>
+            <else>
+                <echo>CHANGES AT OBSERVED FILES NOT FOUND</echo>
+            </else>
+        </if>
+    </target>
+
+
+    <available file=".git" property="git.inited"/> 
+    <target name="init-git" unless="git.inited">
+        <exec executable="git">
+            <arg value="init"/>
+        </exec>
+    </target>
+
+    <macrodef name="git-compile-commit">
+        <attribute name="commit-idx"/>
+        <attribute name="commits-count"/>
+        <sequential>
+            <echo>PROCESSING HEAD~@{commit-idx} COMMIT</echo>
+            <if>
+                <matches string="@{commit-idx}" pattern="@{commits-count}"/>
+                <else>
+                    <exec executable="git">
+                        <arg value="archive"/>
+                        <arg value="--output=${history.commits.dir}/commit-@{commit-idx}.zip"/>
+                        <arg value="HEAD~@{commit-idx}"/>
+                    </exec>
+
+                    <delete dir="${history.build.dir}"/>
+                    <mkdir dir="${history.build.dir}"/>
+                    <unzip src="${history.commits.dir}/commit-@{commit-idx}.zip" dest="${history.build.dir}"/>
+
+                    <var name="compiling-failed" value="false"/>
+                    <trycatch>
+                        <try>
+                            <ant antfile="${history.build.dir}/build.xml" target="compile" usenativebasedir="true"/>
+                        </try>
+                        <catch>
+                            <var name="compiling-failed" value="true"/>
+                        </catch>
+                    </trycatch>
+
+                    <if>
+                        <matches string="${compiling-failed}" pattern="true"/>
+                        <then>
+                            <math result="prev-commit-idx" datatype="int" operation="+" operand1="@{commit-idx}" operand2="1"/>
+                            <git-compile-commit commit-idx="${prev-commit-idx}" commits-count="@{commits-count}"/>
+                        </then>
+                        <else>
+                            <echo>COMMIT HEAD~@{commit-idx} CAN BE COMPILED</echo>
+                            <if>
+                                <matches string="@{commit-idx}" pattern="0"/>
+                                <else>
+                                    <math result="next-commit-idx" datatype="int" operation="-" operand1="@{commit-idx}" operand2="1"/>
+                                    <exec executable="git">
+                                        <arg value="diff"/>
+                                        <arg value="HEAD~@{commit-idx}"/>
+                                        <arg value="HEAD~${next-commit-idx}"/>
+                                        <arg value="--output=${history.diff.path}"/>
+                                    </exec>
+                                    <echo>DIFF WRITTEN TO ${history.diff.path}</echo>
+                                </else>
+                            </if>
+                        </else>
+                    </if>
+                </else>
+            </if>
+        </sequential>
+    </macrodef>
+
+    <target name="history" depends="init-git">
+        <var name="compiling-failed" value="false"/>
+        <trycatch>
+            <try>
+                <antcall target="compile"/>
+            </try>
+            <catch>
+                <var name="compiling-failed" value="true"/>
+            </catch>
+        </trycatch>
+        <if>
+            <matches string="${compiling-failed}" pattern="false"/>
+            <then>
+                <echo>CURRENT VERSION CAN BE COMPILED</echo>
+            </then>
+            <else>
+                <echo>LOOKING FOR COMMIT THAT CAN BE COMPILED</echo>
+                <exec executable="git" outputproperty="git.branch.size">
+                    <arg value="rev-list"/>
+                    <arg value="--count"/>
+                    <arg value="HEAD"/>
+                </exec>
+
+                <mkdir dir="${history.commits.dir}"/>
+
+                <var name="zero" value="0"/>
+                <git-compile-commit commit-idx="${zero}" commits-count="${git.branch.size}"/>
+            </else>
+        </if>
+    </target>
+
+
+    <target name="alt">
+        <echo>CREATING ALT WAR</echo>
+
+        <mkdir dir="${src.dir}"/>
+        <mkdir dir="${tmp.src.dir}"/>
+        <copy todir="${tmp.src.dir}">
+            <fileset dir="${src.dir}"/>
+        </copy>
+
+        <mkdir dir="${build.war.dir}"/>
+        <mkdir dir="${tmp.build.war.dir}"/>
+        <copy todir="${tmp.build.war.dir}">
+            <fileset dir="${build.war.dir}"/>
+        </copy>
+
+        <mkdir dir="${build.classes.dir}"/>
+        <mkdir dir="${tmp.build.classes.dir}"/>
+        <copy todir="${tmp.build.classes.dir}">
+            <fileset dir="${build.classes.dir}"/>
+        </copy>
+
+
+        <replaceregexp match="alt.match" replace="alt.replace" flags="g">
+            <fileset dir="${src.dir}"/>
+        </replaceregexp>
+
+        <antcall target="build">
+            <param name="war.name" value="${alt.war.name}"/>
+        </antcall>
+
+
+        <delete dir="${src.dir}"/>
+        <mkdir dir="${src.dir}"/>
+        <copy todir="${src.dir}">
+            <fileset dir="${tmp.src.dir}"/>
+        </copy>
+
+        <delete dir="${build.war.dir}"/>
+        <mkdir dir="${build.war.dir}"/>
+        <copy todir="${build.war.dir}">
+            <fileset dir="${tmp.build.war.dir}"/>
+        </copy>
+
+        <delete dir="${build.classes.dir}"/>
+        <mkdir dir="${build.classes.dir}"/>
+        <copy todir="${build.classes.dir}">
+            <fileset dir="${tmp.build.classes.dir}"/>
+        </copy>
+        
+        <delete dir="${tmp.dir}"/>
+    </target>
+</project>

@@ -1,0 +1,12 @@
+* {
+    font-family: 'Roboto';
+}
+
+.centered-holder {
+    vertical-align: center;
+    text-align: center;
+}
+
+#header-name-holder, #header-group-holder, #header-variant-holder {
+    width: 33.3%;
+}

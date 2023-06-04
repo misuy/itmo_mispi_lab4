@@ -1,0 +1,71 @@
+* {
+    font-family: 'Roboto';
+}
+
+.centered-holder {
+    vertical-align: center;
+    text-align: center;
+}
+
+#graph-and-selectors-table, #graph-and-selectors-cell {
+    width: 100%;
+}
+
+#graph-cell, #selectors-cell {
+    width: 50%;
+}
+
+#selectors-holder {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.input-holder {
+    margin: 15px 15px 15px 15px;
+}
+
+#graph-holder {
+    height: 500px;
+    z-index: 1;
+}
+
+#table-holder {
+    width: 100%;
+}
+
+.data-table {
+    width: 100%;
+    text-align: center;
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+.data-table tr {
+    border: 1px solid black;
+}
+
+.data-table td {
+    border: 1px solid black;
+}
+
+.data-table-cell {
+    text-align: center;
+}
+
+.data-table-id-button {
+    width: 100%;
+    height: 100%;
+}
+
+#link-holder {
+    width: 100%;
+    text-align: center;
+    background-color: rgba(33, 150, 243, 1);
+    vertical-align: center;
+}
+
+.clock-link {
+    vertical-align: center;
+    font-size: large;
+    text-decoration: none;
+}

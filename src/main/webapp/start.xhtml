@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!DOCTYPE html>
+<html
+        xmlns="http://www.w3.org/1999/xhtml"
+        xmlns:f="http://java.sun.com/jsf/core"
+        xmlns:c="http://java.sun.com/jstl/core"
+        xmlns:h="http://java.sun.com/jsf/html"
+        xmlns:p="http://primefaces.org/ui"
+        xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+>
+<h:head>
+    <script src="https://cdn.anychart.com/releases/8.11.0/js/graphics.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet"/>
+    <link href="resources/css/header_style.css" rel="stylesheet"/>
+    <link href="resources/css/start_style.css" rel="stylesheet"/>
+    <h:outputScript library="primefaces" name="jquery/jquery.js"/>
+</h:head>
+<h:body>
+    <ui:include src="header.xhtml"/>
+    <div id="link-holder">
+        <h:link styleClass="index-link" outcome="to index">посмотреть точечки</h:link>
+    </div>
+    <div id="clock-over-holder">
+        <div id="clock-holder">
+
+        </div>
+    </div>
+    <script type="text/javascript" src="resources/js/clock.js"></script>
+</h:body>
+</html>

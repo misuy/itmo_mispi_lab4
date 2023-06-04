@@ -1,0 +1,32 @@
+* {
+    font-family: 'Roboto';
+}
+
+.centered-holder {
+    vertical-align: center;
+    text-align: center;
+}
+
+#clock-over-holder {
+    width: 100%;
+}
+
+#clock-holder {
+    margin-left: auto;
+    margin-right: auto;
+    width: 500px;
+    height: 500px;
+}
+
+#link-holder {
+    width: 100%;
+    text-align: center;
+    background-color: rgba(33, 150, 243, 1);
+    vertical-align: center;
+}
+
+.index-link {
+    vertical-align: center;
+    font-size: large;
+    text-decoration: none;
+}

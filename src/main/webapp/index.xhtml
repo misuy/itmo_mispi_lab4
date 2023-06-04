@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<!DOCTYPE html>
+<html
+        xmlns="http://www.w3.org/1999/xhtml"
+        xmlns:f="http://java.sun.com/jsf/core"
+        xmlns:c="http://java.sun.com/jstl/core"
+        xmlns:h="http://java.sun.com/jsf/html"
+        xmlns:p="http://primefaces.org/ui"
+        xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+>
+<h:head>
+    <script src="https://cdn.anychart.com/releases/8.11.0/js/graphics.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet"/>
+    <link href="resources/css/header_style.css" rel="stylesheet"/>
+    <link href="resources/css/index_style.css?v=4" rel="stylesheet"/>
+    <h:outputScript library="primefaces" name="jquery/jquery.js"/>
+</h:head>
+<h:body>
+    <ui:include src="header.xhtml"/>
+    <div id="link-holder">
+        <h:link styleClass="clock-link" outcome="to start">посмотреть часики</h:link>
+    </div>
+    <table id="graph-and-selectors-table">
+        <tr>
+            <td id="grpaph-cell">
+                <div id="graph-holder">
+                    <!-- graph here -->
+                </div>
+            </td>
+            <td id="selectors-cell">
+                <div id="selectors-holder" class="centered-holder">
+                    <h:form>
+                        <div id="x-input-holder" class="input-holder">
+                            <p:outputLabel value="X:"/>
+                            <p:spinner value="#{pageControllerBean.currentAttemptBean.dot.x}" min="-5" max="5" stepFactor="0.1">
+                                <f:validateRequired/>
+                                <f:validateDoubleRange minimum="-5" maximum="5"/>
+                            </p:spinner>
+                        </div>
+                        <div id="y-input-holder" class="input-holder">
+                            <p:outputLabel value="Y:"/>
+                            <p:inputText value="#{pageControllerBean.currentAttemptBean.dot.y}">
+                                <f:validateRequired/>
+                                <f:validateDoubleRange minimum="-3" maximum="5"/>
+                            </p:inputText>
+                        </div>
+                        <div id="r-input-holder" class="input-holder">
+                            <p:outputLabel value="R:"/>
+                            <p:spinner value="#{pageControllerBean.currentAttemptBean.dot.r}" min="1" max="3" stepFactor="0.5" onchange="plotGraph()">
+                                <f:validateRequired/>
+                                <f:validateDoubleRange minimum="1" maximum="3"/>
+                            </p:spinner>
+                        </div>
+                        <div id="ok-button-holder" class="input-holder">
+                            <p:commandButton value="ok" ajax="false" action="#{pageControllerBean.addCurrentAttempt()}"/>
+                        </div>
+                    </h:form>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <h:form>
+    <h:dataTable value="#{pageControllerBean.attemptsBean.allAttempts}" var="attempt" styleClass="data-table">
+        <h:column>
+            <f:facet name="header">id</f:facet>
+            <p:outputLabel styleClass="data-table-cell" value="${attempt.id}"/>
+        </h:column>
+        <h:column>
+            <f:facet name="header">x</f:facet>
+            <p:outputLabel styleClass="data-table-cell" value="${attempt.dot.x}"/>
+        </h:column>
+        <h:column>
+            <f:facet name="header">y</f:facet>
+            <p:outputLabel styleClass="data-table-cell" value="${attempt.dot.y}"/>
+        </h:column>
+        <h:column>
+            <f:facet name="header">r</f:facet>
+            <p:outputLabel styleClass="data-table-cell" value="${attempt.dot.r}"/>
+        </h:column>
+        <h:column>
+            <f:facet name="header">result</f:facet>
+            <p:outputLabel styleClass="data-table-cell" value="${attempt.result}"/>
+        </h:column>
+        <h:column>
+            <f:facet name="header">processed at</f:facet>
+            <p:outputLabel styleClass="data-table-cell" value="${attempt.processedAt}"/>
+        </h:column>
+        <h:column>
+            <f:facet name="header">processing time</f:facet>
+            <p:outputLabel styleClass="data-table-cell" value="${attempt.processingTime}"/>
+        </h:column>
+    </h:dataTable>
+    </h:form>
+    <h:outputScript/>
+    <script type="text/javascript" src="resources/js/parsers.js"></script>
+    <script type="text/javascript" src="resources/js/validators.js"></script>
+    <script type="text/javascript" src="resources/js/graph.js?v=1"></script>
+    <script type="text/javascript" src="resources/js/click_handler.js"></script>
+</h:body>
+</html>
